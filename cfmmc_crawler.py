@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import os
+import sys
 from io import BytesIO
 from typing import Sequence
 
@@ -8,6 +9,7 @@ from PIL import Image
 from bs4 import BeautifulSoup
 from requests import session
 
+import pandas as pd
 
 class UserNamePasswordError(ValueError):
     pass
@@ -15,7 +17,6 @@ class UserNamePasswordError(ValueError):
 
 class VerificationCodeError(ValueError):
     pass
-
 
 class CFMMCCrawler(object):
     # modular constants, mostly web addresses
@@ -105,6 +106,14 @@ class CFMMCCrawler(object):
         if query_type not in self.query_type_dict.keys():
             raise ValueError('query_type 必须为 逐日 或 逐笔 !')
 
+    def get_full_path(self, date, query_type):
+        trade_date = date.strftime('%Y-%m-%d')
+        path = os.path.join(self.output_dir, self.fund_name, self.broker + '_' + self.account_no, '日报', query_type)
+        file_name = self.account_no + '_' + trade_date + '.xls'
+        full_path = os.path.join(path, file_name)
+        os.makedirs(path, exist_ok=True)
+        return full_path
+
     def get_daily_data(self, date: dt.date, query_type: str) -> None:
         """
         下载日报数据
@@ -114,13 +123,8 @@ class CFMMCCrawler(object):
         :return: None
         """
         self._check_args(query_type)
-
+        full_path = self.get_full_path(date, query_type)
         trade_date = date.strftime('%Y-%m-%d')
-        path = os.path.join(self.output_dir, self.fund_name, self.broker + '_' + self.account_no, '日报', query_type)
-        file_name = self.account_no + '_' + trade_date + '.xls'
-        full_path = os.path.join(path, file_name)
-        os.makedirs(path, exist_ok=True)
-
         post_data = {
             "org.apache.struts.taglib.html.TOKEN": self.token,
             "tradeDate": trade_date,
@@ -130,6 +134,13 @@ class CFMMCCrawler(object):
         self.token = self._get_token(data_page.text)
 
         self._download_file(self.excel_daily_download_url, full_path)
+
+    def print_net_amout(self, datestr):
+        date = dt.datetime.strptime(datestr, "%Y%m%d")
+        full_path = self.get_full_path(date, list(self.query_type_dict.keys())[0])
+        df = pd.read_excel(full_path)
+        print(df.iloc[10])
+        return df.iloc[10, 7]
 
     def get_monthly_data(self, month: dt.date, query_type: str) -> None:
         """
@@ -242,7 +253,12 @@ if __name__ == '__main__':
                 print(e)
 
         if crawler.token:
-            crawler.batch_daily_download(config['start_date'], config['end_date'])
-            crawler.batch_monthly_download(config['start_date'], config['end_date'])
-            print('完成操作, 登出!')
+            if len(sys.argv) == 1:
+                crawler.batch_daily_download(config['start_date'], config['end_date'])
+                crawler.batch_monthly_download(config['start_date'], config['end_date'])
+                print('完成操作, 登出!')
+            if sys.argv[1] == 'today':
+                today = dt.datetime.now().strftime("%Y%m%d")
+                crawler.batch_daily_download(today, today)
+                crawler.print_net_amout(today) 
             crawler.logout()
