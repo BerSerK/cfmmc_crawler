@@ -3,7 +3,7 @@ Manual:
 1. 在 `config.json` 里填写相关信息. 模板文件为 `config_example.json`
     - 日期格式需为 `%Y%m%d`, 例如 `20190603`.
 2. 运行 `cfmmc_crawler.py`.
-3. 运行 `python cfmmc_crawler.py`, 可获得当日结算单, 并打印上日结存与当日客户权益。
+3. 运行 `python cfmmc_crawler.py today`, 可获得当日结算单, 并打印上日结存与当日客户权益。
 
 Misc:
 - 登录需提供验证码. 现在的处理方式是弹窗手工输入. 
