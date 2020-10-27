@@ -140,6 +140,7 @@ class CFMMCCrawler(object):
         full_path = self.get_full_path(date, list(self.query_type_dict.keys())[0])
         df = pd.read_excel(full_path)
         print("%s:%f, %s:%f"%(df.iloc[10,0], df.iloc[10, 2], df.iloc[10, 5], df.iloc[10, 7]))
+        print("%s:%f, %s:%f"%(df.iloc[11,0], df.iloc[11, 2], df.iloc[11, 5], df.iloc[11, 7]))
         return df.iloc[10, 7]
 
     def get_monthly_data(self, month: dt.date, query_type: str) -> None:
